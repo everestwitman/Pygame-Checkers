@@ -10,7 +10,7 @@ import pygame, sys
 from pygame.locals import *
 
 pygame.init()
-DISPLAYSURF = pygame.display.set_mode((400,300)) # make a window with dimensions (400,300)
+DISPLAYSURF = pygame.display.set_mode((1280,720)) # make a window with dimensions (400,300)
 pygame.display.set_caption("Hello, World!") # set the caption text to be "Hello, World!"
 
 while True: # main game loop

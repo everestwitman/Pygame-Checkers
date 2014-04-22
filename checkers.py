@@ -50,64 +50,7 @@ class Piece: # game pieces
     def render(self,screen):
         pygame.draw.circle(screen,self.color,self.pos, self.size)
 
-def main(): # main game loop
-    global FPSCLOCK, screen, render_list
 
-    pygame.init()
-    FPSCLOCK = pygame.time.Clock()
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Checkers")
-
-    render_list = [] # list of objects
-    mouse_pressed = False # Pressed down THIS FRAME
-    mouse_down = False # mouse is held down
-    mouse_released = False # Released THIS FRAME
-    target = None # target of Drag/Drop
-
-    setup_pieces()
-
-    while True: # main game loop
-        draw_board() # clear screen
-
-        mouse_pos = pygame.mouse.get_pos()
-        
-        for Event in pygame.event.get():
-            if Event.type == pygame.QUIT:
-                terminate()
-            
-            if Event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pressed = True 
-                mouse_down = True 
-               
-            if Event.type == pygame.MOUSEBUTTONUP:
-                mouse_released = True
-                mouse_down = False
-             
-        if mouse_pressed == True:
-            for item in render_list: # search all items
-                if (mouse_pos[0] >= (item.pos[0]-item.size) and 
-                    mouse_pos[0] <= (item.pos[0]+item.size) and 
-                    mouse_pos[1] >= (item.pos[1]-item.size) and 
-                    mouse_pos[1] <= (item.pos[1]+item.size) and
-                    item.movable == True): # inside the bounding box
-                    target = item # "pick up" item
-            
-        if mouse_down and target is not None: # if we are dragging something
-            target.pos = mouse_pos # move the target with us
-        
-        if mouse_released:
-            target = None # Drop item, if we have any
-            
-        for item in render_list:
-            item.render(screen) # Draw all items
-            
-        mouse_pressed = False # Reset these to False
-        mouse_released = False 
-
-        pygame.display.update()
-        FPSCLOCK.tick(FPS)
-
-    pass # End of function
 
 def draw_board():
     """
@@ -219,6 +162,66 @@ def terminate():
     # terminates the program
     pygame.quit()
     sys.exit()
+
+
+def main(): # main game loop
+    global FPSCLOCK, screen, render_list
+
+    pygame.init()
+    FPSCLOCK = pygame.time.Clock()
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("Checkers")
+
+    render_list = [] # list of objects
+    mouse_pressed = False # Pressed down THIS FRAME
+    mouse_down = False # mouse is held down
+    mouse_released = False # Released THIS FRAME
+    target = None # target of Drag/Drop
+
+    setup_pieces()
+
+    while True: # main game loop
+        draw_board() # clear screen
+
+        mouse_pos = pygame.mouse.get_pos()
+        
+        for Event in pygame.event.get():
+            if Event.type == pygame.QUIT:
+                terminate()
+            
+            if Event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pressed = True 
+                mouse_down = True 
+               
+            if Event.type == pygame.MOUSEBUTTONUP:
+                mouse_released = True
+                mouse_down = False
+             
+        if mouse_pressed == True:
+            for item in render_list: # search all items
+                if (mouse_pos[0] >= (item.pos[0]-item.size) and 
+                    mouse_pos[0] <= (item.pos[0]+item.size) and 
+                    mouse_pos[1] >= (item.pos[1]-item.size) and 
+                    mouse_pos[1] <= (item.pos[1]+item.size) and
+                    item.movable == True): # inside the bounding box
+                    target = item # "pick up" item
+            
+        if mouse_down and target is not None: # if we are dragging something
+            target.pos = mouse_pos # move the target with us
+        
+        if mouse_released:
+            target = None # Drop item, if we have any
+            
+        for item in render_list:
+            item.render(screen) # Draw all items
+            
+        mouse_pressed = False # Reset these to False
+        mouse_released = False 
+
+        pygame.display.update()
+        FPSCLOCK.tick(FPS)
+
+    pass # End of function
 
 if __name__ == '__main__': # Are we RUNNING from this module?
     main() # Execute our main function

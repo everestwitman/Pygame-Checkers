@@ -9,7 +9,7 @@ from http://boards.openpandora.org/topic/11593-drag-and-drop-in-pygame/
 Everest Witman - 4 / 2014 - Marlboro College - Programming Workshop
 """
 
-import pygame, sys
+import pygame, sys, math
 from pygame.locals import *
 
 ##COLORS##
@@ -24,16 +24,33 @@ class Game:
         self.turn = turn # who's turn is it?
         self.board = Board()
         self.graphics = Graphics()
+        self.mouse_pressed = False
 
     def setup(self):
         self.graphics.setup_window()
         #self.board.move_piece((0,0), (1,5))
 
     def event_loop(self):
+        mouse_pos = pygame.mouse.get_pos()
+        square_to_move = None
+        piece_moved = False
+
         for event in pygame.event.get():
 
             if event.type == QUIT:
                 self.terminate()
+
+            if event.type == MOUSEBUTTONDOWN and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]] != None and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]].occupent != None:
+                if self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]].occupent.color == self.turn:
+                    square_to_move = self.graphics.mouse_in_square(mouse_pos)
+
+                    while piece_moved == False:
+                        mouse_pos = pygame.mouse.get_pos()
+
+                        for Event in pygame.event.get():
+                            if Event.type == MOUSEBUTTONDOWN and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]] != None and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]].occupent == None:
+                                self.board.move_piece(square_to_move, self.graphics.mouse_in_square(mouse_pos))
+                                piece_moved = True
 
     def update(self,):
         # update both the GUI and game state
@@ -136,6 +153,7 @@ class Board:
         self.board_matrix[end_coords[1]][end_coords[0]].occupent = self.board_matrix[start_coords[1]][start_coords[0]].occupent
         self.board_matrix[start_coords[1]][start_coords[0]].occupent = None
 
+
 class Graphics:
     def __init__(self, caption = "Checkers", fps = 60, window_size = 600, background = pygame.image.load('resources/board.png')):
         # pixel diameter of pieces and have board squares
@@ -149,6 +167,7 @@ class Graphics:
         self.window_size = window_size
         self.screen = pygame.display.set_mode((window_size, window_size))
         self.background = background
+        self.mouse_pos = (0,0)
 
     def setup_window(self):
         pygame.init()
@@ -158,6 +177,8 @@ class Graphics:
         self.clock.tick(self.fps)
 
     def update_display(self, board):
+        self.mouse_pos = pygame.mouse.get_pos()
+
         self.screen.blit(self.background, (0,0))
         self.draw_board(board)
         pygame.display.update()
@@ -173,6 +194,11 @@ class Graphics:
             for y in xrange(0,8):
                 if (board[y][x] != None and board[y][x].occupent != None):
                     self.draw_piece(board[y][x], (x,y), board[y][x].occupent.color)
+
+    def mouse_in_square(self, mouse_pos):
+        """Returns the board position as (x,y). Takes the pixel position of the mouse as an imput."""
+        board_coords = ((mouse_pos[0] / self.piece_size), (mouse_pos[1] / self.piece_size))    
+        return board_coords
 
 class Square:
     def __init__(self, occupent = None, end_square = False):

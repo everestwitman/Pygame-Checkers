@@ -5,7 +5,7 @@ A simple (incomplete) checkers engine written in pygame.
 
 Here are the rules I am using: http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm
 
-I adapt some code from checkers.py on line 130 found at http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm 
+I adapted some code from checkers.py on line 130 found at http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm 
 
 Everest Witman - 2014
 """
@@ -36,9 +36,6 @@ class Game:
 	def setup(self):
 		"""Draws the window and board at the beginning of the game"""
 		self.graphics.setup_window()
-
-		self.board.move_piece((1,5),(self.board.legal_moves((1,5))[0]))
-		print self.board.legal_moves((0,4))
 
 	def event_loop(self):
 		"""The event loop. This is where events are triggered 

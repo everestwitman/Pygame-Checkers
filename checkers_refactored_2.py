@@ -124,15 +124,6 @@ class Board():
 
 		# initialize squares and place them in matrix
 
-		matrix =[[None, None, None, None, None, None, None, None],
-				 [None, None, None, None, None, None, None, None],
-				 [None, None, None, None, None, None, None, None],
-				 [None, None, None, None, None, None, None, None],
-				 [None, None, None, None, None, None, None, None],
-				 [None, None, None, None, None, None, None, None],
-				 [None, None, None, None, None, None, None, None],
-				 [None, None, None, None, None, None, None, None]]
-
 		matrix = [[None] * 8 for i in xrange(8)]
 
 		# The following code block has been adapted from http://itgirl.dreamhosters.com/itgirlgames/games/Program%20Leaders/ClareR/Checkers/checkers.py

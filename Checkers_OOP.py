@@ -1,10 +1,7 @@
 """
-checkers.py
+checkers_OOP.py
 
 A very simple Checkers engine written with Pygame.
-
-Referenced atari_eric's example of how to drag and drop objects in Pygame 
-from http://boards.openpandora.org/topic/11593-drag-and-drop-in-pygame/
 
 Everest Witman - 4 / 2014 - Marlboro College - Programming Workshop
 """
@@ -24,16 +21,15 @@ class Game:
         self.turn = turn # who's turn is it?
         self.board = Board()
         self.graphics = Graphics()
-        self.mouse_pressed = False
 
     def setup(self):
         self.graphics.setup_window()
-        #self.board.move_piece((0,0), (1,5))
 
     def event_loop(self):
         mouse_pos = pygame.mouse.get_pos()
         square_to_move = None
         piece_moved = False
+        self.mouse_pressed = False
 
         for event in pygame.event.get():
 
@@ -51,6 +47,12 @@ class Game:
                             if Event.type == MOUSEBUTTONDOWN and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]] != None and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]].occupent == None:
                                 self.board.move_piece(square_to_move, self.graphics.mouse_in_square(mouse_pos))
                                 piece_moved = True
+                                self.new_turn()
+
+            if event.type == MOUSEBUTTONDOWN and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]] != None and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]].occupent != None:
+                if event.button == 3:
+                    self.board.capture_piece(self.graphics.mouse_in_square())
+
 
     def update(self,):
         # update both the GUI and game state
@@ -66,6 +68,15 @@ class Game:
         while True:
             self.event_loop()
             self.update()
+
+    def new_turn(self):
+        """Switches who's turn it is."""
+
+        if self.turn == BLUE:
+            self.turn = RED
+        else:
+            self.turn = BLUE
+
         
 class Board:
     def __init__(self):
@@ -73,6 +84,13 @@ class Board:
 
     def new_board(self):
         # initialize pieces
+
+        """self.pieces = [None] * 24
+        for i in range(12):
+            self.pieces[i] = Piece[RED]
+        for i in range(13, 24):
+            self.pieces[i] = Piece[BLUE]"""
+
         piece_red_1 = Piece(RED)
         piece_red_2 = Piece(RED)
         piece_red_3 = Piece(RED)
@@ -153,6 +171,8 @@ class Board:
         self.board_matrix[end_coords[1]][end_coords[0]].occupent = self.board_matrix[start_coords[1]][start_coords[0]].occupent
         self.board_matrix[start_coords[1]][start_coords[0]].occupent = None
 
+    def capture_piece(self, coords):
+        self.board_matrix[coords[1]][coords[0]].occupent = None
 
 class Graphics:
     def __init__(self, caption = "Checkers", fps = 60, window_size = 600, background = pygame.image.load('resources/board.png')):

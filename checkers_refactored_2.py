@@ -1,7 +1,11 @@
 """
 checkers_refactored_2.py
 
-A simple (incomplete) checkers engine written in pygame.
+A simple (incomplete) checkers engine written in pygame. 
+
+Here are the rules I am using: http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm
+
+I adapt some code from checkers.py on line 130 found at http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm 
 
 Everest Witman - 2014
 """
@@ -16,6 +20,12 @@ BLUE     = (  0,   0, 255)
 RED      = (255,   0,   0)
 BLACK    = (  0,   0,   0)
 
+##DIRECTIONS##
+NORTHWEST = "northwest"
+NORTHEAST = "northeast"
+SOUTHWEST = "southwest"
+SOUTHEAST = "southeast"
+
 class Game:
 	"""The main game control."""
 
@@ -26,7 +36,9 @@ class Game:
 	def setup(self):
 		"""Draws the window and board at the beginning of the game"""
 		self.graphics.setup_window()
-		print self.board.legal_moves((1,5))
+
+		self.board.move_piece((1,5),(self.board.legal_moves((1,5))[0]))
+		print self.board.legal_moves((0,4))
 
 	def event_loop(self):
 		"""The event loop. This is where events are triggered 
@@ -71,7 +83,7 @@ class Graphics:
 	def setup_window(self):
 		pygame.init()
 		pygame.display.set_caption(self.caption)
-	
+
 	def update_display(self, board):
 		#self.screen.blit(self.background, (0,0))
 		self.draw_board_squares(board)
@@ -111,8 +123,19 @@ class Board():
 		"""Create a new board matrix."""
 
 		# initialize squares and place them in matrix
-		matrix = [[None] * 8] * 8
 
+		matrix =[[None, None, None, None, None, None, None, None],
+				 [None, None, None, None, None, None, None, None],
+				 [None, None, None, None, None, None, None, None],
+				 [None, None, None, None, None, None, None, None],
+				 [None, None, None, None, None, None, None, None],
+				 [None, None, None, None, None, None, None, None],
+				 [None, None, None, None, None, None, None, None],
+				 [None, None, None, None, None, None, None, None]]
+
+		matrix = [[None] * 8 for i in xrange(8)]
+
+		# The following code block has been adapted from http://itgirl.dreamhosters.com/itgirlgames/games/Program%20Leaders/ClareR/Checkers/checkers.py
 		for x in xrange(8):
 			for y in xrange(8):
 				if (x % 2 != 0) and (y % 2 == 0):
@@ -123,91 +146,6 @@ class Board():
 					matrix[y][x] = Square(WHITE)
 				elif (x % 2 == 0) and (y % 2 == 0): 
 					matrix[y][x] = Square(BLACK)
-
-		"""for y in xrange(8):
-			for x in xrange(8):
-				if y % 2 == 0:
-					matrix[y][x] = Square(BLACK)
-				else:
-					matrix[y][x] = Square(BLUE)
-
-		for y in xrange(1,8,2):
-			for x in xrange(8):
-				if x % 2 == 0:
-					matrix[y][x] = Square(WHITE)
-				else:
-					matrix[y][x] = Square(BLACK)"""
-
-		"""matrix[0][0] = Square(BLACK)
-		matrix[0][1] = Square(WHITE)
-		matrix[0][2] = Square(BLACK)
-		matrix[0][3] = Square(WHITE)
-		matrix[0][4] = Square(BLACK)
-		matrix[0][5] = Square(WHITE)
-		matrix[0][6] = Square(BLACK)
-		matrix[0][7] = Square(WHITE)
-
-		matrix[1][0] = Square(WHITE)
-		matrix[1][1] = Square(BLACK)
-		matrix[1][2] = Square(WHITE)
-		matrix[1][3] = Square(BLACK)
-		matrix[1][4] = Square(WHITE)
-		matrix[1][5] = Square(BLACK)
-		matrix[1][6] = Square(WHITE)
-		matrix[1][7] = Square(BLACK)
-		
-		matrix[2][1] = Square(BLACK)
-		matrix[2][2] = Square(WHITE)
-		matrix[2][3] = Square(BLACK)
-		matrix[2][4] = Square(WHITE)
-		matrix[2][5] = Square(BLACK)
-		matrix[2][6] = Square(WHITE)
-		matrix[2][7] = Square(BLACK)
-		
-		matrix[3][0] = Square(WHITE)
-		matrix[3][1] = Square(BLACK)
-		matrix[3][2] = Square(WHITE)
-		matrix[3][3] = Square(BLACK)
-		matrix[3][4] = Square(WHITE)
-		matrix[3][5] = Square(BLACK)
-		matrix[3][6] = Square(WHITE)
-		matrix[3][7] = Square(BLACK)
-		
-		matrix[4][0] = Square(BLACK)
-		matrix[4][1] = Square(WHITE)
-		matrix[4][2] = Square(BLACK)
-		matrix[4][3] = Square(WHITE)
-		matrix[4][4] = Square(BLACK)
-		matrix[4][5] = Square(WHITE)
-		matrix[4][6] = Square(BLACK)
-		matrix[4][7] = Square(WHITE)
-
-		matrix[5][0] = Square(WHITE)
-		matrix[5][1] = Square(BLACK)
-		matrix[5][2] = Square(WHITE)
-		matrix[5][3] = Square(BLACK)
-		matrix[5][4] = Square(WHITE)
-		matrix[5][5] = Square(BLACK)
-		matrix[5][6] = Square(WHITE)
-		matrix[5][7] = Square(BLACK)
-
-		matrix[6][0] = Square(BLACK)
-		matrix[6][1] = Square(WHITE)
-		matrix[6][2] = Square(BLACK)
-		matrix[6][3] = Square(WHITE)
-		matrix[6][4] = Square(BLACK)
-		matrix[6][5] = Square(WHITE)
-		matrix[6][6] = Square(BLACK)
-		matrix[6][7] = Square(WHITE)
-
-		matrix[7][0] = Square(WHITE)
-		matrix[7][1] = Square(BLACK)
-		matrix[7][2] = Square(WHITE)
-		matrix[7][3] = Square(BLACK)
-		matrix[7][4] = Square(WHITE)
-		matrix[7][5] = Square(BLACK)
-		matrix[7][6] = Square(WHITE)
-		matrix[7][7] = Square(BLACK)"""
 
 		# initialize the pieces and put them in the appropriate squares
 
@@ -236,23 +174,49 @@ class Board():
 
 
 		return board_string
+	
+	def rel(self, dir, (x,y)):
+		if dir == NORTHWEST:
+			return (x - 1, y - 1)
+		elif dir == NORTHEAST:
+			return (x + 1, y - 1)
+		elif dir == SOUTHWEST:
+			return (x - 1, y + 1)
+		elif dir == SOUTHEAST:
+			return (x + 1, y + 1)
+		else:
+			return 0
 
-	def legal_moves(self, coords):
-		"""Returns a list of legal moves from a set of coordinates (x,y) on the board."""
-		if self.matrix[coords[0]][coords[1]].occupant != None:
-			if self.matrix[coords[0]][coords[1]].occupant.color == BLUE:
-				if self.matrix[coords[0]][coords[1]].occupant.king == False:
-					blind_legal_moves = [(coords[0] - 1, coords[1] - 1), (coords[0] + 1, coords[1] - 1)] # legal moves before considering other pieces
-					legal_moves = [] # legal moves considering other pieces
+	def legal_moves(self, (x,y)):
+		"""Returns a list of legal move locations from a set of coordinates (x,y) on the board."""
+		if self.matrix[x][y].occupant != None:
+			if self.matrix[x][y].occupant.color == BLUE:
+				if self.matrix[x][y].occupant.king == False:
+					blind_legal_moves = [self.rel(NORTHWEST, (x,y)), self.rel(NORTHEAST, (x,y))] # legal moves before considering other pieces
+				else: 
+					blind_legal_moves = [self.rel(NORTHWEST, (x,y)), self.rel(NORTHEAST, (x,y)), self.rel(SOUTHWEST, (x,y)), self.rel(SOUTHEAST, (x,y))]
 
-					for move in blind_legal_moves:
-						if self.matrix[move[0]][move[1]].occupant == None:
-							legal_moves.append(move)
+		legal_moves = [] # legal moves considering other pieces
+
+		for move in blind_legal_moves:
+			if self.matrix[move[0]][move[1]].occupant == None and move[0] >= 0 and move[1] >= 0:
+				legal_moves.append(move)
+
 
 			return legal_moves
 
 		else:
 			return []
+
+	def remove_piece(self, (x,y)):
+		"""Removes a piece from the board at position (x,y). """
+		self.matrix[x][y].occupant = None
+
+	def move_piece(self, (start_x, start_y), (end_x, end_y)):
+		"""Move a piece from (start_x, start_y) to (end_x, end_y)."""
+
+		self.matrix[end_x][end_y].occupant = self.matrix[start_x][start_y].occupant
+		self.remove_piece((start_x, start_y))
 
 
 	def is_end_square(self, coords):
@@ -295,7 +259,9 @@ def main():
 
 main()
 
-if True:
+DOCTEST = False
+
+if DOCTEST:
 	if __name__ == "__main__":
 		import doctest
 		doctest.testmod()

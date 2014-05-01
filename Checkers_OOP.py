@@ -49,10 +49,6 @@ class Game:
                                 piece_moved = True
                                 self.new_turn()
 
-            if event.type == MOUSEBUTTONDOWN and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]] != None and self.board.board_matrix[self.graphics.mouse_in_square(mouse_pos)[1]][self.graphics.mouse_in_square(mouse_pos)[0]].occupent != None:
-                if event.button == 3:
-                    self.board.capture_piece(self.graphics.mouse_in_square())
-
 
     def update(self,):
         # update both the GUI and game state

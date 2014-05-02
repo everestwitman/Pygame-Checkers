@@ -1,17 +1,17 @@
 """
-checkers_refactored_2.py
+checkers_refactored_3.py
 
 A simple (incomplete) checkers engine written in Python with the pygame 1.9.2 libraries.
 
 Here are the rules I am using: http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm
 
-I adapted some code from checkers.py found at http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm/checkers.py starting on line 159 of my program.
+I adapted some code from checkers.py found at 
+http://itgirl.dreamhosters.com/itgirlgames/games/Program%20Leaders/ClareR/Checkers/checkers.py starting on line 159 of my program.
 
 === TO DO == 
-Higlight Legal Move's (If I have time)
-King image
+King Image
 Check for Endgame
-Multiple Hops
+Sound Effects
 
 Everest Witman - May 2014 - Marlboro College - Programming Workshop 
 """
@@ -19,12 +19,16 @@ Everest Witman - May 2014 - Marlboro College - Programming Workshop
 import pygame, sys
 from pygame.locals import *
 
+pygame.font.init()
 ##COLORS##
-#             R    G    B
+#             R    G    B 
 WHITE    = (255, 255, 255)
 BLUE     = (  0,   0, 255)
+GREEN    = (  0, 255,   0)
 RED      = (255,   0,   0)
 BLACK    = (  0,   0,   0)
+GOLD     = (255, 215,   0)
+HIGH     = (160, 190, 255)
 
 ##DIRECTIONS##
 NORTHWEST = "northwest"
@@ -42,10 +46,13 @@ class Game:
 		self.turn = BLUE
 		self.selected_piece = None # a board location. 
 		self.hop = False
+		self.selected_legal_moves = []
 
 	def setup(self):
 		"""Draws the window and board at the beginning of the game"""
 		self.graphics.setup_window()
+		self.board.location((0,0)).occupant.king = True
+		self.board.location((7,7)).occupant.king = True
 
 	def event_loop(self):
 		"""
@@ -53,6 +60,8 @@ class Game:
 		(like a mouse click) and then effect the game state.
 		"""
 		self.mouse_pos = self.graphics.board_coords(pygame.mouse.get_pos()) # what square is the mouse in?
+		if self.selected_piece != None:
+			self.selected_legal_moves = self.board.legal_moves(self.selected_piece, self.hop)
 
 		for event in pygame.event.get():
 
@@ -60,23 +69,39 @@ class Game:
 				self.terminate_game()
 
 			if event.type == MOUSEBUTTONDOWN:
-		
-				if self.board.location(self.mouse_pos).occupant != None and self.board.location(self.mouse_pos).occupant.color == self.turn:
-					self.selected_piece = self.mouse_pos
+				if self.hop == False:
+					if self.board.location(self.mouse_pos).occupant != None and self.board.location(self.mouse_pos).occupant.color == self.turn:
+						self.selected_piece = self.mouse_pos
 
-				elif self.selected_piece != None and self.mouse_pos in self.board.legal_moves(self.selected_piece):
+					elif self.selected_piece != None and self.mouse_pos in self.board.legal_moves(self.selected_piece):
 
-					self.board.move_piece(self.selected_piece, self.mouse_pos)
+						self.board.move_piece(self.selected_piece, self.mouse_pos)
 					
-					if self.mouse_pos not in self.board.adjacent(self.selected_piece):
+						if self.mouse_pos not in self.board.adjacent(self.selected_piece):
+							self.board.remove_piece((self.selected_piece[0] + (self.mouse_pos[0] - self.selected_piece[0]) / 2, self.selected_piece[1] + (self.mouse_pos[1] - self.selected_piece[1]) / 2))
+						
+							self.hop = True
+							self.selected_piece = self.mouse_pos
+
+						else:
+							self.end_turn()
+
+				if self.hop == True:					
+					if self.selected_piece != None and self.mouse_pos in self.board.legal_moves(self.selected_piece, self.hop):
+						self.board.move_piece(self.selected_piece, self.mouse_pos)
 						self.board.remove_piece((self.selected_piece[0] + (self.mouse_pos[0] - self.selected_piece[0]) / 2, self.selected_piece[1] + (self.mouse_pos[1] - self.selected_piece[1]) / 2))
 
-					self.end_turn()
-					
+					if self.board.legal_moves(self.mouse_pos, self.hop) == []:
+							self.end_turn()
+
+					else:
+						self.selected_piece = self.mouse_pos
+
+
 
 	def update(self):
 		"""Calls on the graphics class to update the game display."""
-		self.graphics.update_display(self.board.matrix)
+		self.graphics.update_display(self.board, self.selected_legal_moves, self.selected_piece)
 
 	def terminate_game(self):
 		"""Quits the program and ends the game."""
@@ -101,6 +126,7 @@ class Game:
 			self.turn = BLUE
 
 		self.selected_piece = None
+		self.selected_legal_moves = []
 		self.hop = False
 
 class Graphics:
@@ -111,7 +137,7 @@ class Graphics:
 		self.clock = pygame.time.Clock()
 
 		self.window_size = 600
-		self.screen = pygame.display.set_mode((self.window_size, self.window_size)) 
+		self.screen = pygame.display.set_mode((self.window_size, self.window_size))
 		self.background = pygame.image.load('resources/board.png')
 
 		self.square_size = self.window_size / 8
@@ -121,8 +147,9 @@ class Graphics:
 		pygame.init()
 		pygame.display.set_caption(self.caption)
 
-	def update_display(self, board):
+	def update_display(self, board, legal_moves, selected_piece):
 		self.screen.blit(self.background, (0,0))
+		self.highlight_squares(legal_moves, selected_piece)
 		self.draw_board_pieces(board)
 
 		pygame.display.update()
@@ -138,8 +165,12 @@ class Graphics:
 		"""Take a board object and draws all of its pieces to the display"""
 		for x in xrange(8):
 			for y in xrange(8):
-				if board[x][y].occupant != None:
-					pygame.draw.circle(self.screen, board[x][y].occupant.color, self.pixel_coords((x,y)), 600 / 16) 
+				if board.matrix[x][y].occupant != None:
+					pygame.draw.circle(self.screen, board.matrix[x][y].occupant.color, self.pixel_coords((x,y)), self.piece_size) 
+
+					if board.location((x,y)).occupant.king == True:
+						pygame.draw.circle(self.screen, GOLD, self.pixel_coords((x,y)), int (self.piece_size / 1.8), self.piece_size / 4)
+
 
 	def pixel_coords(self, board_coords):
 		"""
@@ -149,7 +180,18 @@ class Graphics:
 		return (board_coords[0] * self.square_size + self.piece_size, board_coords[1] * self.square_size + self.piece_size)
 
 	def board_coords(self, (pixel_x, pixel_y)):
-		return (pixel_x / self.square_size, pixel_y / self.square_size)		
+		return (pixel_x / self.square_size, pixel_y / self.square_size)	
+
+	def highlight_squares(self, squares, origin):
+		"""
+		Squares is a list of board coordinates. 
+		highlight_squares highlights them.
+		"""
+		for square in squares:
+			pygame.draw.rect(self.screen, HIGH, (square[0] * self.square_size, square[1] * self.square_size, self.square_size, self.square_size))	
+
+		if origin != None:
+			pygame.draw.rect(self.screen, HIGH, (origin[0] * self.square_size, origin[1] * self.square_size, self.square_size, self.square_size))
 
 class Board():
 	def __init__(self):
@@ -188,7 +230,9 @@ class Board():
 		return matrix
 
 	def board_string(self, board):
-		"""Takes a board and returns a matrix of the board space colors."""
+		"""
+		Takes a board and returns a matrix of the board space colors.
+		"""
 
 		board_string = [[None] * 8] * 8 
 
@@ -225,6 +269,7 @@ class Board():
 		"""
 		Takes a set of coordinates as arguments and returns self.matrix[x][y]
 		"""
+
 		return self.matrix[x][y]
 
 	def blind_legal_moves(self, (x,y)):
@@ -258,19 +303,21 @@ class Board():
 		blind_legal_moves = self.blind_legal_moves((x,y)) 
 		legal_moves = []
 
-		for move in blind_legal_moves:
-			if hop == False:
-				if self.on_board(move):
+		if hop == False:
+			for move in blind_legal_moves:
+				if hop == False:
+					if self.on_board(move):
+						if self.location(move).occupant == None:
+							legal_moves.append(move)
 
-					if self.location(move).occupant == None:
-						legal_moves.append(move)
+						elif self.location(move).occupant.color != self.location((x,y)).occupant.color and self.on_board((move[0] + (move[0] - x), move[1] + (move[1] - y))) and self.location((move[0] + (move[0] - x), move[1] + (move[1] - y))).occupant == None: # is this location filled by an enemy piece?
+							legal_moves.append((move[0] + (move[0] - x), move[1] + (move[1] - y)))
 
-					elif self.location(move).occupant.color != self.location((x,y)).occupant.color and self.location((move[0] + (move[0] - x), move[1] + (move[1] - y))).occupant == None: # is this location filled by an enemy piece?
+		else: # hop == True
+			for move in blind_legal_moves:
+				if self.on_board(move) and self.location(move).occupant != None:
+					if self.location(move).occupant.color != self.location((x,y)).occupant.color and self.on_board((move[0] + (move[0] - x), move[1] + (move[1] - y))) and self.location((move[0] + (move[0] - x), move[1] + (move[1] - y))).occupant == None: # is this location filled by an enemy piece?
 						legal_moves.append((move[0] + (move[0] - x), move[1] + (move[1] - y)))
-
-			else:
-				if self.location(move).occupant.color != self.location((x,y)).occupant.color and self.location((move[0] + (move[0] - x), move[1] + (move[1] - y))).occupant == None: # is this location filled by an enemy piece?
-					legal_moves.append((move[0] + (move[0] - x), move[1] + (move[1] - y)))
 
 		return legal_moves
 
@@ -359,8 +406,5 @@ def main():
 
 
 if __name__ == "__main__":
-	#import doctest
-	#doctest.testmod()
-
 	main()
 

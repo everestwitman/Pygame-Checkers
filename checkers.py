@@ -1,7 +1,7 @@
 """
 checkers.py
 
-A simple checkers engine written in Python with the pygame 1.9.2 libraries.
+A simple checkers engine written in Python with the pygame 1.9.1 libraries.
 
 Here are the rules I am using: http://boardgames.about.com/cs/checkersdraughts/ht/play_checkers.htm
 

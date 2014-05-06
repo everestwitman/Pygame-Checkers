@@ -8,8 +8,7 @@ Here are the rules I am using: http://boardgames.about.com/cs/checkersdraughts/h
 I adapted some code from checkers.py found at 
 http://itgirl.dreamhosters.com/itgirlgames/games/Program%20Leaders/ClareR/Checkers/checkers.py starting on line 159 of my program.
 
-This is the final version of my checkers project for Programming Workshop at Marlboro College. It's very object oriented, using a lot of the
-common coding idioms in game development. 
+This is the final version of my checkers project for Programming Workshop at Marlboro College. The entire thing has been rafactored and made almost completely object oriented.
 
 Funcitonalities include:
 
@@ -261,7 +260,7 @@ class Graphics:
 		self.text_rect_obj = self.text_surface_obj.get_rect()
 		self.text_rect_obj.center = (self.window_size / 2, self.window_size / 2)
 
-class Board():
+class Board:
 	def __init__(self):
 		self.matrix = self.new_board()
 

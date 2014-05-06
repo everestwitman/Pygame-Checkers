@@ -3,6 +3,16 @@ checkers_OOP.py
 
 A very simple Checkers engine written with Pygame.
 
+This was my attempt at making the program much more object oriented. I have a Game class
+that handles the control and flow of the current game, a Board class which stores th current game state
+and houses alot of the methods having to do with altering it, and I have a Graphics class for my GUI methods.
+Instead of having a ton global variables, I instead have a lot of attributes inside of the classes that make sense,
+This is much better, I think.
+
+Functionally this is an improvemnt. Pieces are know locked to a grid and mechanism for moving them
+to click on the one you want to move and then click on the square you want to move to. It will only let you
+move to black squares, and it alternates player turns.
+
 Everest Witman - 4 / 2014 - Marlboro College - Programming Workshop
 """
 

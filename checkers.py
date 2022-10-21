@@ -20,6 +20,8 @@ NORTHEAST = "northeast"
 SOUTHWEST = "southwest"
 SOUTHEAST = "southeast"
 
+# The code above is from the pygame checkers game I sourced. Credits in comments below
+
 """
 
 Edits throughout the code:
@@ -35,11 +37,9 @@ class Agent:
 		self.game = game
 		self.state = state
 
-	def alpha_beta_cutoff_search(self, state, game, d=4, cutoff_test=None, eval_fn=None):
+	def alpha_beta_cutoff_search(self, state, game, d, cutoff_test=None, eval_fn=None):
 		"""Search game to determine best action; use alpha-beta pruning.
     	This version cuts off search and uses an evaluation function."""
-		
-		player = game.to_move()
 
     	# Functions used by alpha_beta
 		def max_value(state, alpha, beta, depth):
@@ -49,8 +49,10 @@ class Agent:
 			for a in game.actions(state):
 				v = max(v, min_value(game.result(state, a), alpha, beta, depth + 1))
 				if v >= beta:
+					print("max v:", v, "at depth:",depth)
 					return v
 				alpha = max(alpha, v)
+			
 			return v
 		def min_value(state, alpha, beta, depth):
 			if cutoff_test(depth):
@@ -59,23 +61,26 @@ class Agent:
 			for a in game.actions(state):
 				v = min(v, max_value(game.result(state, a), alpha, beta, depth + 1))
 				if v <= alpha:
+					print("min v:", v, "at depth:",depth)
 					return v
 				beta = min(beta, v)
-				return v
+			
+			return v
 
     	# Body of alpha_beta_cutoff_search starts here:
     	# The default test cuts off at depth d or at a terminal state
-		cutoff_test = (cutoff_test or (lambda depth: depth > d or game.check_for_endgame()))
-		eval_fn = eval_fn or (lambda state: game.utility(state, player))
+		cutoff_test = ((lambda depth: depth > d) or cutoff_test)
+		eval_fn = eval_fn
 		best_score = -np.inf
 		beta = np.inf
 		best_action = None
 		for a in game.actions(state):
-			v = min_value(game.result(state, a), best_score, beta, 1)
+			v = max_value(game.result(state, a), best_score, beta, 1)
 			if v > best_score:
 				best_score = v
 				best_action = a
-			return best_action
+			print("best score:", best_score)
+		return best_action
 
 
 	def update_state(self, state):
@@ -135,9 +140,9 @@ class Game:
 		self.graphics = Graphics()
 		self.board = Board()
 		
-		self.turn = BLUE
+		self.turn = "blue"
 		self.selected_piece = None # a board location. 
-		self.peices = self.board.legal_pieces(self.turn) # a list of possible peices to move, used to enforce jumping rules
+		self.peices = self.board.legal_pieces(BLUE) # a list of possible peices to move, used to enforce jumping rules
 		self.hop = False
 		self.selected_legal_moves = []
 
@@ -160,21 +165,6 @@ class Game:
 		if self.selected_piece != None and self.selected_piece in self.peices:
 			self.selected_legal_moves = self.board.legal_moves(self.selected_piece, self.hop)
 
-		if self.turn == RED:
-			self.agent.update_state(self.board)
-			move = self.agent.alpha_beta_cutoff_search(self.board, self, 4, None, self.eval2)
-			self.board.move_piece(move[0], move[1])
-
-			if move[1] not in self.board.adjacent(move[0]):
-				self.hop = True
-				self.board.remove_piece((int(move[0][0] + (move[1][0] - move[0][0]) / 2), int(move[0][1] + (move[1][1] - move[0][1]) / 2)))
-				if self.board.legal_moves(move[1], self.hop) == []:
-					self.end_turn()
-					return
-			if not self.hop:
-				self.end_turn()
-				return
-
 		for event in pygame.event.get():
 
 			if event.type == QUIT:
@@ -196,7 +186,10 @@ class Game:
 							self.board.remove_piece((int(self.selected_piece[0] + (self.mouse_pos[0] - self.selected_piece[0]) / 2), int(self.selected_piece[1] + (self.mouse_pos[1] - self.selected_piece[1]) / 2)))
 
 							self.hop = True
-							self.peices = self.board.legal_pieces(self.turn)
+							if self.turn == "blue":
+								self.peices = self.board.legal_pieces(BLUE)
+							else:
+								self.peices = self.board.legal_pieces(RED)
 							self.selected_piece = self.mouse_pos
 
 						else:
@@ -211,6 +204,38 @@ class Game:
 
 					if self.board.legal_moves(self.selected_piece, self.hop) == []:
 							self.end_turn()
+		
+		#AI functionality hardcoded
+		if self.turn == "red":
+			self.agent.update_state(self.board)
+			move = self.agent.alpha_beta_cutoff_search(self.board, self, 4, self.check_for_endgame, self.eval2)
+			self.board.move_piece(move[0], move[1])
+
+			if move[1] not in self.board.adjacent(move[0]):
+				self.hop = True
+				self.board.remove_piece((int(move[0][0] + (move[1][0] - move[0][0]) / 2), int(move[0][1] + (move[1][1] - move[0][1]) / 2)))
+				if self.board.legal_moves(move[1], self.hop) == []:
+					self.end_turn()
+					return
+			if not self.hop:
+				self.end_turn()
+				return
+
+		elif self.turn == "blue":
+			self.agent.update_state(self.board)
+			move = self.agent.alpha_beta_cutoff_search(self.board, self, 4, self.check_for_endgame, self.eval2)
+			self.board.move_piece(move[0], move[1])
+
+			if move[1] not in self.board.adjacent(move[0]):
+				self.hop = True
+				self.board.remove_piece((int(move[0][0] + (move[1][0] - move[0][0]) / 2), int(move[0][1] + (move[1][1] - move[0][1]) / 2)))
+				if self.board.legal_moves(move[1], self.hop) == []:
+					self.end_turn()
+					return
+			if not self.hop:
+				self.end_turn()
+				return
+		
 
 
 	def update(self):
@@ -235,26 +260,27 @@ class Game:
 		End the turn. Switches the current player. 
 		end_turn() also checks for end game and resets a lot of class attributes.
 		"""
-		if self.turn == BLUE:
-			self.turn = RED
+		if self.turn == "blue":
+			self.turn = "red"
 			print("Blue turn ended")
-			self.peices = self.board.legal_pieces(self.turn)
+			self.peices = self.board.legal_pieces(RED)
 		else:
-			self.turn = BLUE
+			self.turn = "blue"
 			print("Pink turn ended")
-			self.peices = self.board.legal_pieces(self.turn)
+			self.peices = self.board.legal_pieces(BLUE)
 
 		self.selected_piece = None
 		self.selected_legal_moves = []
 		self.hop = False
 
-		if self.check_for_endgame():
-			if self.turn == BLUE:
-				self.graphics.draw_message("RED WINS!")
-			else:
-				self.graphics.draw_message("BLUE WINS!")
+		#if self.check_for_endgame(0):
+			#if self.turn == "blue":
+			#	self.graphics.draw_message("RED WINS!")
+			#else:
+			#	self.graphics.draw_message("BLUE WINS!")
 
-	def check_for_endgame(self):
+	#depth is dummy variable
+	def check_for_endgame(self, depth):
 		"""
 		Checks to see if a player has run out of moves or pieces. If so, then return True. Else return False.
 		"""
@@ -267,12 +293,12 @@ class Game:
 		return True
 	
 	#added by William Ament
-	#returns current turn
-	def to_move(self):
-		return self.turn
 	
 	def actions(self, state):
-		legal_pieces = state.legal_pieces(self.turn)
+		if self.turn == "red":
+			legal_pieces = state.legal_pieces(RED)
+		else:
+			legal_pieces = state.legal_pieces(BLUE)
 		all_legal_moves = []
 		for piece in legal_pieces:
 			legal_moves = state.legal_moves(piece)
@@ -297,15 +323,15 @@ class Game:
 		#count of checkers
 		numBlue = 0
 		numRed = 0
-		numWT = 1.0
+		numWT = 10.0
 		#count of kings
 		numBlueKings = 0
 		numRedKings = 0
-		kingWT = 1.0
+		kingWT = 5.0
 		#sum of distance from opposite side
 		blueDist = 0
 		redDist = 0
-		distWT = 1.0
+		distWT = 0.25
 		
 		for x in range(8):
 			for y in range(8):
@@ -328,23 +354,27 @@ class Game:
 		#count of checkers
 		numBlue = 0
 		numRed = 0
-		numWT = 1.0
+		numWT = 25.0
 		#count of kings
 		numBlueKings = 0
 		numRedKings = 0
-		kingWT = 1.0
+		kingWT = 200.0
 		#sum of distance from opposite side
 		blueDist = 0
 		redDist = 0
-		distWT = 1.0
+		distWT = 0.5
 		#count of pieces on the back row
 		blueBack = 0
 		redBack = 0
-		backWT = 1.0
+		backWT = 10.0
 		#count of pieces that are protected from being jumped
 		blueProtec = 0
 		redProtec = 0
-		protecWT = 1.0
+		protecWT = 20.0
+		#count of pieces that are under threat of being jumped
+		blueThreat = 0
+		redThreat = 0
+		threatWT = -30.0
 
 
 		for x in range(8):
@@ -362,10 +392,15 @@ class Game:
 						if x == 0 or x == 7:
 							blueProtec +=1
 						else:
-							if (x-1) >= 0 and (x+1) < 8 and (y+1) < 8:
-								if (state.location((x-1,y+1)).occupant != None and (state.location((x-1,y+1)).occupant.color == BLUE or state.location((x-1,y+1)).occupant.king)) and (state.location((x+1,y+1)).occupant != None and (state.location((x+1,y+1)).occupant.color == BLUE or state.location((x+1, y+1)).occupant.king)):
+							if (x-1) >= 0 and (x+1) < 8 and (y+1) < 8 and (y-1) > 0:
+								if (state.location((x-1,y+1)).occupant != None and (state.location((x-1,y+1)).occupant.color == BLUE or not state.location((x-1,y+1)).occupant.king)):
 									blueProtec +=1
-
+								if (state.location((x+1,y+1)).occupant != None and (state.location((x+1,y+1)).occupant.color == BLUE or not state.location((x+1, y+1)).occupant.king)):
+									blueProtec +=1
+								if (state.location((x-1, y-1)).occupant != None and (state.location((x-1,y-1)).occupant.color == RED and state.location((x+1,y+1)).occupant == None)):
+									blueThreat +=1
+								if (state.location((x+1, y-1)).occupant != None and (state.location((x+1,y-1)).occupant.color == RED and state.location((x-1,y+1)).occupant == None)):
+									blueThreat +=1
 				elif space != None and space.color == RED:
 					if space.king:
 						numRedKings +=1
@@ -378,11 +413,22 @@ class Game:
 						if x == 0 or x == 7:
 							redProtec +=1
 						else:
-							if (x-1) >= 0 and (x+1) < 8 and (y+1) < 8:
-								if (state.location((x-1,y+1)).occupant != None and (state.location((x-1,y+1)).occupant.color == RED or state.location((x-1,y+1)).occupant.king)) and (state.location((x+1,y+1)).occupant != None and (state.location((x+1,y+1)).occupant.color == RED or state.location((x+1, y+1)).occupant.king)):
+							if (x-1) >= 0 and (x+1) < 8 and (y+1) < 8 and (y-1) > 0:
+								if (state.location((x-1,y-1)).occupant != None and (state.location((x-1,y-1)).occupant.color == RED or not state.location((x-1,y-1)).occupant.king)):
 									redProtec +=1
-
-		return numWT*(numRed - numBlue) + kingWT*(numRedKings - numBlueKings) + distWT*(redDist - blueDist) + backWT*(redBack - blueBack) + protecWT*(redProtec - blueProtec)
+								if (state.location((x+1,y-1)).occupant != None and (state.location((x+1,y-1)).occupant.color == RED or not state.location((x+1, y-1)).occupant.king)):
+									redProtec +=1
+								if (state.location((x-1, y+1)).occupant != None and (state.location((x-1,y+1)).occupant.color == BLUE and state.location((x+1,y-1)).occupant == None)):
+									redThreat +=1
+								if (state.location((x+1, y+1)).occupant != None and (state.location((x+1,y+1)).occupant.color == BLUE and state.location((x-1,y-1)).occupant == None)):
+									redThreat +=1
+		
+		if self.turn == "red":
+			print("piece:", numWT*(numRed - numBlue), "king:" ,kingWT*(numRedKings - numBlueKings),"dist:",distWT*(numRed - numBlue)*(redDist) ,"back:", backWT*(redBack - blueBack) ,"protec:", protecWT*(redProtec - blueProtec) , "threat:", threatWT*(redThreat - blueThreat))
+			return numWT*(numRed - numBlue) + kingWT*(numRedKings - numBlueKings) + distWT*(numRed - numBlue)*(redDist) + backWT*(redBack - blueBack) + protecWT*(redProtec - blueProtec) + threatWT*(redThreat - blueThreat)
+		else:
+			print("piece:", numWT*(numBlue - numRed), "king:", kingWT*(numBlueKings - numRedKings), "dist:", distWT*(numBlue - numRed)*(blueDist) ,"back:", backWT*(blueBack - redBack) ,"protec:", protecWT*(blueProtec - redProtec) ,"threat:", threatWT*(blueThreat - redThreat))
+			return numWT*(numBlue - numRed) + kingWT*(numBlueKings - numRedKings) + distWT*(numBlue - numRed)*(blueDist) + backWT*(blueBack - redBack) + protecWT*(blueProtec - redProtec) + threatWT*(blueThreat - redThreat)
 
 
 class Graphics:

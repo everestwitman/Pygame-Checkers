@@ -98,7 +98,7 @@ class Game:
 						self.board.move_piece(self.selected_piece, self.mouse_pos)
 					
 						if self.mouse_pos not in self.board.adjacent(self.selected_piece):
-							self.board.remove_piece((self.selected_piece[0] + (self.mouse_pos[0] - self.selected_piece[0]) / 2, self.selected_piece[1] + (self.mouse_pos[1] - self.selected_piece[1]) / 2))
+							self.board.remove_piece(((self.selected_piece[0] + self.mouse_pos[0]) >> 1, (self.selected_piece[1] + self.mouse_pos[1]) >> 1))
 						
 							self.hop = True
 							self.selected_piece = self.mouse_pos
@@ -109,7 +109,7 @@ class Game:
 				if self.hop == True:					
 					if self.selected_piece != None and self.mouse_pos in self.board.legal_moves(self.selected_piece, self.hop):
 						self.board.move_piece(self.selected_piece, self.mouse_pos)
-						self.board.remove_piece((self.selected_piece[0] + (self.mouse_pos[0] - self.selected_piece[0]) / 2, self.selected_piece[1] + (self.mouse_pos[1] - self.selected_piece[1]) / 2))
+						self.board.remove_piece(((self.selected_piece[0] + self.mouse_pos[0]) >> 1, (self.selected_piece[1] + self.mouse_pos[1]) >> 1))
 
 					if self.board.legal_moves(self.mouse_pos, self.hop) == []:
 							self.end_turn()
@@ -159,8 +159,8 @@ class Game:
 		"""
 		Checks to see if a player has run out of moves or pieces. If so, then return True. Else return False.
 		"""
-		for x in xrange(8):
-			for y in xrange(8):
+		for x in range(8):
+			for y in range(8):
 				if self.board.location((x,y)).color == BLACK and self.board.location((x,y)).occupant != None and self.board.location((x,y)).occupant.color == self.turn:
 					if self.board.legal_moves((x,y)) != []:
 						return False
@@ -178,8 +178,8 @@ class Graphics:
 		self.screen = pygame.display.set_mode((self.window_size, self.window_size))
 		self.background = pygame.image.load('resources/board.png')
 
-		self.square_size = self.window_size / 8
-		self.piece_size = self.square_size / 2
+		self.square_size = self.window_size >> 3
+		self.piece_size = self.square_size >> 1
 
 		self.message = False
 
@@ -209,21 +209,21 @@ class Graphics:
 		"""
 		Takes a board object and draws all of its squares to the display
 		"""
-		for x in xrange(8):
-			for y in xrange(8):
+		for x in range(8):
+			for y in range(8):
 				pygame.draw.rect(self.screen, board[x][y].color, (x * self.square_size, y * self.square_size, self.square_size, self.square_size), )
 	
 	def draw_board_pieces(self, board):
 		"""
 		Takes a board object and draws all of its pieces to the display
 		"""
-		for x in xrange(8):
-			for y in xrange(8):
+		for x in range(8):
+			for y in range(8):
 				if board.matrix[x][y].occupant != None:
 					pygame.draw.circle(self.screen, board.matrix[x][y].occupant.color, self.pixel_coords((x,y)), self.piece_size) 
 
 					if board.location((x,y)).occupant.king == True:
-						pygame.draw.circle(self.screen, GOLD, self.pixel_coords((x,y)), int (self.piece_size / 1.7), self.piece_size / 4)
+						pygame.draw.circle(self.screen, GOLD, self.pixel_coords((x,y)), int (self.piece_size / 1.7), self.piece_size >> 2)
 
 
 	def pixel_coords(self, board_coords):
@@ -233,11 +233,11 @@ class Graphics:
 		"""
 		return (board_coords[0] * self.square_size + self.piece_size, board_coords[1] * self.square_size + self.piece_size)
 
-	def board_coords(self, (pixel_x, pixel_y)):
+	def board_coords(self, pixel):
 		"""
 		Does the reverse of pixel_coords(). Takes in a tuple of of pixel coordinates and returns what square they are in.
 		"""
-		return (pixel_x / self.square_size, pixel_y / self.square_size)	
+		return (pixel[0] // self.square_size, pixel[1] // self.square_size)
 
 	def highlight_squares(self, squares, origin):
 		"""
@@ -258,7 +258,7 @@ class Graphics:
 		self.font_obj = pygame.font.Font('freesansbold.ttf', 44)
 		self.text_surface_obj = self.font_obj.render(message, True, HIGH, BLACK)
 		self.text_rect_obj = self.text_surface_obj.get_rect()
-		self.text_rect_obj.center = (self.window_size / 2, self.window_size / 2)
+		self.text_rect_obj.center = (self.window_size >> 1, self.window_size >> 1)
 
 class Board:
 	def __init__(self):
@@ -271,12 +271,12 @@ class Board:
 
 		# initialize squares and place them in matrix
 
-		matrix = [[None] * 8 for i in xrange(8)]
+		matrix = [[None] * 8 for i in range(8)]
 
 		# The following code block has been adapted from
 		# http://itgirl.dreamhosters.com/itgirlgames/games/Program%20Leaders/ClareR/Checkers/checkers.py
-		for x in xrange(8):
-			for y in xrange(8):
+		for x in range(8):
+			for y in range(8):
 				if (x % 2 != 0) and (y % 2 == 0):
 					matrix[y][x] = Square(WHITE)
 				elif (x % 2 != 0) and (y % 2 != 0):
@@ -288,11 +288,11 @@ class Board:
 
 		# initialize the pieces and put them in the appropriate squares
 
-		for x in xrange(8):
-			for y in xrange(3):
+		for x in range(8):
+			for y in range(3):
 				if matrix[x][y].color == BLACK:
 					matrix[x][y].occupant = Piece(RED)
-			for y in xrange(5, 8):
+			for y in range(5, 8):
 				if matrix[x][y].color == BLACK:
 					matrix[x][y].occupant = Piece(BLUE)
 
@@ -305,8 +305,8 @@ class Board:
 
 		board_string = [[None] * 8] * 8 
 
-		for x in xrange(8):
-			for y in xrange(8):
+		for x in range(8):
+			for y in range(8):
 				if board[x][y].color == WHITE:
 					board_string[x][y] = "WHITE"
 				else:
@@ -315,7 +315,7 @@ class Board:
 
 		return board_string
 	
-	def rel(self, dir, (x,y)):
+	def rel(self, dir, pixel):
 		"""
 		Returns the coordinates one square in a different direction to (x,y).
 
@@ -335,6 +335,8 @@ class Board:
 		>>> board.rel(SOUTHWEST, (2,5))
 		(1,6)
 		"""
+		x = pixel[0]
+		y = pixel[1]
 		if dir == NORTHWEST:
 			return (x - 1, y - 1)
 		elif dir == NORTHEAST:
@@ -346,27 +348,33 @@ class Board:
 		else:
 			return 0
 
-	def adjacent(self, (x,y)):
+	def adjacent(self, pixel):
 		"""
 		Returns a list of squares locations that are adjacent (on a diagonal) to (x,y).
 		"""
+		x = pixel[0]
+		y = pixel[1]
 
 		return [self.rel(NORTHWEST, (x,y)), self.rel(NORTHEAST, (x,y)),self.rel(SOUTHWEST, (x,y)),self.rel(SOUTHEAST, (x,y))]
 
-	def location(self, (x,y)):
+	def location(self, pixel):
 		"""
 		Takes a set of coordinates as arguments and returns self.matrix[x][y]
 		This can be faster than writing something like self.matrix[coords[0]][coords[1]]
 		"""
+		x = pixel[0]
+		y = pixel[1]
 
 		return self.matrix[x][y]
 
-	def blind_legal_moves(self, (x,y)):
+	def blind_legal_moves(self, pixel):
 		"""
 		Returns a list of blind legal move locations from a set of coordinates (x,y) on the board. 
 		If that location is empty, then blind_legal_moves() return an empty list.
 		"""
 
+		x = pixel[0]
+		y = pixel[1]
 		if self.matrix[x][y].occupant != None:
 			
 			if self.matrix[x][y].occupant.king == False and self.matrix[x][y].occupant.color == BLUE:
@@ -383,12 +391,14 @@ class Board:
 
 		return blind_legal_moves
 
-	def legal_moves(self, (x,y), hop = False):
+	def legal_moves(self, pixel, hop = False):
 		"""
 		Returns a list of legal move locations from a given set of coordinates (x,y) on the board.
 		If that location is empty, then legal_moves() returns an empty list.
 		"""
 
+		x = pixel[0]
+		y = pixel[1]
 		blind_legal_moves = self.blind_legal_moves((x,y)) 
 		legal_moves = []
 
@@ -410,16 +420,22 @@ class Board:
 
 		return legal_moves
 
-	def remove_piece(self, (x,y)):
+	def remove_piece(self, pixel):
 		"""
 		Removes a piece from the board at position (x,y). 
 		"""
+		x = pixel[0]
+		y = pixel[1]
 		self.matrix[x][y].occupant = None
 
-	def move_piece(self, (start_x, start_y), (end_x, end_y)):
+	def move_piece(self, pixel_start, pixel_end):
 		"""
 		Move a piece from (start_x, start_y) to (end_x, end_y).
 		"""
+		start_x = pixel_start[0]
+		start_y = pixel_start[1]
+		end_x = pixel_end[0]
+		end_y = pixel_end[1]
 
 		self.matrix[end_x][end_y].occupant = self.matrix[start_x][start_y].occupant
 		self.remove_piece((start_x, start_y))
@@ -450,7 +466,7 @@ class Board:
 		else:
 			return False
 
-	def on_board(self, (x,y)):
+	def on_board(self, pixel):
 		"""
 		Checks to see if the given square (x,y) lies on the board.
 		If it does, then on_board() return True. Otherwise it returns false.
@@ -468,17 +484,21 @@ class Board:
 		False
 		"""
 
+		x = pixel[0]
+		y = pixel[1]
 		if x < 0 or y < 0 or x > 7 or y > 7:
 			return False
 		else:
 			return True
 
 
-	def king(self, (x,y)):
+	def king(self, pixel):
 		"""
 		Takes in (x,y), the coordinates of square to be considered for kinging.
 		If it meets the criteria, then king() kings the piece in that square and kings it.
 		"""
+		x = pixel[0]
+		y = pixel[1]
 		if self.location((x,y)).occupant != None:
 			if (self.location((x,y)).occupant.color == BLUE and y == 0) or (self.location((x,y)).occupant.color == RED and y == 7):
 				self.location((x,y)).occupant.king = True 
